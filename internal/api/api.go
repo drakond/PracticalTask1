@@ -1,6 +1,7 @@
 package api
 
 import (
+	"prtask1/internal/config"
 	"prtask1/internal/service"
 
 	"github.com/gofiber/fiber/v2"
@@ -9,14 +10,21 @@ import (
 )
 
 func SetupRoutes(taskService service.Service) *fiber.App {
-	app := fiber.New()
+	cfg := config.Load()
+
+	app := fiber.New(fiber.Config{
+		ServerHeader: cfg.ServerName,
+	})
 
 	// Middleware
 	app.Use(logger.New())
 	app.Use(cors.New())
 
 	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{"status": "ok"})
+		return c.JSON(fiber.Map{
+			"status": "ok",
+			"app":    cfg.AppName,
+		})
 	})
 
 	api := app.Group("/api/v1")
