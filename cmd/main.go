@@ -1,35 +1,25 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/adaptor"
+	"log"
+	"prtask1/internal/api"
+	"prtask1/internal/config"
+	"prtask1/internal/repo"
+	"prtask1/internal/service"
 )
 
 func main() {
-	// New fiber app
-	app := fiber.New()
+	// Загрузка конфигурации
+	cfg := config.Load()
 
-	// http.Handler -> fiber.Handler
-	app.Get("/", adaptor.HTTPHandler(handler(greet)))
+	// Инициализация зависимостей
+	memoryStorage := repo.NewMemoryStorage()
+	taskService := service.NewService(memoryStorage)
 
-	// http.HandlerFunc -> fiber.Handler
-	app.Get("/func", adaptor.HTTPHandlerFunc(greetfunc))
+	// Настройка роутов
+	app := api.SetupRoutes(taskService)
 
-	// Listen on port 3000
-	app.Listen(":3000")
-}
-
-func handler(f http.HandlerFunc) http.Handler {
-	return http.HandlerFunc(f)
-}
-
-func greet(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Hello World!")
-}
-
-func greetfunc(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Hello Hello!")
+	// Запуск сервера
+	log.Printf("🚀 %s starting on port %s", cfg.AppName, cfg.Port)
+	app.Listen(cfg.Port)
 }
